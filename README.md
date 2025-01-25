@@ -1,13 +1,13 @@
 # Tomcat y Maven - Versión 1.0.0
 
-## 1. Instalación de OpenJDK
+## 2. Instalación de OpenJDK
 
 Instalamos el kit de desarrollo de Java:
 ```bash
 sudo apt install -y openjdk-11-jdk
 ```
 
-## 2. Instalación y Configuración de Tomcat
+## 2.1 Instalación y Configuración de Tomcat
 
 ### 2.2 Instalación del paquete
 
@@ -86,11 +86,13 @@ sudo systemctl restart tomcat9
 
 ## 3. Despliegue manual mediante GUI
 
-1. Accedemos a la GUI de Tomcat con el usuario configurado previamente.
+1. Accedemos a la GUI de Tomcat con el usuario configurado previamente.alumno / 1234
+![Captura del funcionamiento](/2.png)
 2. Buscamos la sección para desplegar archivos WAR.
 3. Seleccionamos el archivo `tomcat1.war`.
 4. Pulsamos **Desplegar** y verificamos que la aplicación esté disponible en el directorio `/tomcat1`.
 
+![Captura del funcionamiento](/3.png)
 ---
 
 ## 4. Configuración y Despliegue con Maven
