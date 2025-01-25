@@ -89,18 +89,41 @@ EOF
     cd rock-paper-scissors
     git checkout patch-1
 
-    # Editamos el pom.xml para agregar el plugin de Maven
-    sed -i '/<plugins>/a \
-      <plugin>\
-        <groupId>org.apache.tomcat.maven</groupId>\
-        <artifactId>tomcat7-maven-plugin</artifactId>\
-        <version>2.2</version>\
-        <configuration>\
-          <url>http://localhost:8080/manager/text</url>\
-          <server>Tomcat</server>\
-          <path>/rock-paper-scissors</path>\
-        </configuration>\
-      </plugin>' pom.xml
+    # Verificar si el archivo pom.xml existe
+if [ ! -f pom.xml ]; then
+echo "El archivo pom.xml no existe, creándolo..."
+# Crear un archivo pom.xml básico si no existe
+cat << EOF > pom.xml
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<modelVersion>4.0.0</modelVersion>
+<groupId>com.example</groupId>
+<artifactId>rock-paper-scissors</artifactId>
+<version>1.0-SNAPSHOT</version>
+<packaging>war</packaging>
+<build>
+  <plugins>
+    <!-- El plugin tomcat7-maven-plugin será agregado aquí -->
+  </plugins>
+</build>
+</project>
+EOF
+fi
+
+# Luego agrega el plugin con sed si el archivo ya está presente o se acaba de crear
+sed -i '/<plugins>/a \
+<plugin>\ 
+  <groupId>org.apache.tomcat.maven</groupId>\ 
+  <artifactId>tomcat7-maven-plugin</artifactId>\ 
+  <version>2.2</version>\ 
+  <configuration>\ 
+    <url>http://localhost:8080/manager/text</url>\ 
+    <server>Tomcat</server>\ 
+    <path>/rock-paper-scissors</path>\ 
+  </configuration>\ 
+</plugin>' pom.xmlexit
+
 
     # Construimos y desplegamos la aplicación
     mvn clean install tomcat7:deploy
