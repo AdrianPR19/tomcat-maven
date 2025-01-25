@@ -18,7 +18,7 @@ sudo apt install -y tomcat9
 
 ### 2.3 Creación del grupo y usuario para Tomcat
 
-#### Creación del grupo:
+#### Creación de grupo:
 ```bash
 sudo groupadd tomcat9
 ```
