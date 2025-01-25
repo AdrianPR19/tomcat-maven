@@ -11,25 +11,25 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: <<-SHELL
     sudo apt-get update
 
-    # Aquí instalaremos el opendjk
+    # Procedemos con la instalación de OpenJDK
     sudo apt-get install -y openjdk-11-jdk
 
-    # Aquí el tomcat9
+    # Ahora instalamos Tomcat 9
     sudo apt-get install -y tomcat9
 
-    # creamos el grupo tomcat9
+    # Creamos un grupo para Tomcat 9
     sudo groupadd tomcat9
 
-    # y su usuario, para luego posteriormente poder acceder
+    # Creamos el usuario para Tomcat, sin acceso de shell
     sudo useradd -s /bin/false -g tomcat9 -d /etc/tomcat9 tomcat9
 
     sudo systemctl start tomcat9
     sudo systemctl enable tomcat9
 
-    # Instalamos administrador web de tomcat 
+    # Instalamos las herramientas administrativas de Tomcat
     sudo apt-get install -y tomcat9-admin
 
-    # Configuramos los usuarios del archivo "tomcat-users.xml"
+    # Configuramos los usuarios en el archivo "tomcat-users.xml"
     sudo tee /etc/tomcat9/tomcat-users.xml > /dev/null << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <tomcat-users xmlns="http://tomcat.apache.org/xml"
@@ -52,7 +52,7 @@ roles="manager-script"/>
 </tomcat-users>
 EOF
 
-    # Modificamos el archivo de context.xml para el acceso remoto
+    # Actualizamos el archivo context.xml para habilitar el acceso remoto
     sudo tee /usr/share/tomcat9-admin/host-manager/META-INF/context.xml > /dev/null << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <Context antiResourceLocking="false" privileged="true" >
@@ -64,10 +64,10 @@ EOF
 </Context>
 EOF
 
-    # Instalamos el maven
+    # Instalamos Maven
     sudo apt-get install -y maven
 
-    # y lo configuramos
+    # Configuramos Maven con el archivo settings.xml
     sudo tee /etc/maven/settings.xml > /dev/null << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
@@ -84,16 +84,16 @@ EOF
 </settings>
 EOF
 
-    # Clonamos el repositorio y cambiamos a la rama patch-1
-git clone https://github.com/cameronmcnz/rock-paper-scissors.git
-cd rock-paper-scissors
-git checkout patch-1
+    # Clonamos el repositorio del proyecto y cambiamos a la rama patch-1
+    git clone https://github.com/cameronmcnz/rock-paper-scissors.git
+    cd rock-paper-scissors
+    git checkout patch-1
 
-# Verificar si el archivo pom.xml existe
-if [ ! -f pom.xml ]; then
-  echo "El archivo pom.xml no existe, creándolo..."
-  # Crear un archivo pom.xml básico si no existe
-  cat << EOF > pom.xml
+    # Verificamos si el archivo pom.xml ya existe
+    if [ ! -f pom.xml ]; then
+      echo "El archivo pom.xml no está presente, vamos a crearlo..."
+      # Si no existe, creamos un archivo pom.xml básico
+      cat << EOF > pom.xml
 <project xmlns="http://maven.apache.org/POM/4.0.0"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -103,44 +103,45 @@ if [ ! -f pom.xml ]; then
   <version>1.0-SNAPSHOT</version>
   <packaging>war</packaging>
   <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.tomcat.maven</groupId>
-        <artifactId>tomcat7-maven-plugin</artifactId>
-        <version>2.2</version>
-        <configuration>
-          <url>http://localhost:8080/manager/text</url>
-          <server>Tomcat</server>
-          <path>/rock-paper-scissors</path>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
+  <plugins>
+    <plugin>
+      <groupId>org.apache.tomcat.maven</groupId>
+      <artifactId>tomcat-maven-plugin</artifactId>
+      <version>2.2</version>
+      <configuration>
+        <url>http://localhost:8080/manager/text</url>
+        <server>Tomcat</server>
+        <path>/rock-paper-scissors</path>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+
 </project>
 EOF
-fi
+    fi
 
-# Luego agrega el plugin con sed si el archivo ya está presente o se acaba de crear
-sed -i '/<plugins>/a \
-<plugin>\
-  <groupId>org.apache.tomcat.maven</groupId>\
-  <artifactId>tomcat7-maven-plugin</artifactId>\
-  <version>2.2</version>\
-  <configuration>\
-    <url>http://localhost:8080/manager/text</url>\
-    <server>Tomcat</server>\
-    <path>/rock-paper-scissors</path>\
-  </configuration>\
-</plugin>' pom.xml
+    # Si el archivo ya existe, añadimos el plugin de Tomcat
+    sed -i '/<plugins>/a \
+    <plugin>\
+      <groupId>org.apache.tomcat.maven</groupId>\
+      <artifactId>tomcat7-maven-plugin</artifactId>\
+      <version>2.2</version>\
+      <configuration>\
+        <url>http://localhost:8080/manager/text</url>\
+        <server>Tomcat</server>\
+        <path>/rock-paper-scissors</path>\
+      </configuration>\
+    </plugin>' pom.xml
 
-# Construimos y desplegamos la aplicación
-mvn clean install tomcat7:deploy
+    # Compilamos el proyecto y lo desplegamos en Tomcat
+    mvn clean install tomcat7:deploy
 
-# Reiniciamos el tomcat
-sudo systemctl restart tomcat9
+    # Reiniciamos Tomcat para aplicar los cambios
+    sudo systemctl restart tomcat9
 
-sudo apt-get install -y git
-
+    # Instalamos Git si no está presente
+    sudo apt-get install -y git
 
   SHELL
 end
