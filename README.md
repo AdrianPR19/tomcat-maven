@@ -172,3 +172,5 @@ mvn tomcat7:undeploy
 git clone https://github.com/cameronmcnz/rock-paper-scissors.git
 cd rock-paper-scissors
 mvn tomcat7:deploy
+```
+3. Para comprobar su funcionamiento entramos en http://localhost:8080/manager/text
