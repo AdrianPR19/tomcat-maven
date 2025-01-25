@@ -1,85 +1,172 @@
-# Instalación de Tomcat 9 y OpenJDK
+# Tomcat y Maven - Versión 1.0.0
 
-Este documento describe los pasos para instalar **OpenJDK** y **Tomcat 9**, y configurar los servicios necesarios en un sistema basado en Debian.
+## 1. Instalación de OpenJDK
 
-## **Requisitos previos**
-- Un sistema operativo basado en Linux (por ejemplo, Debian 11).
-- Acceso a un usuario con privilegios de administrador.
+Instalamos el kit de desarrollo de Java:
+```bash
+sudo apt install -y openjdk-11-jdk
+```
+
+## 2. Instalación y Configuración de Tomcat
+
+### 2.2 Instalación del paquete
+
+Instalamos el servidor de aplicaciones Tomcat:
+```bash
+sudo apt install -y tomcat9
+```
+
+### 2.3 Creación del grupo y usuario para Tomcat
+
+#### Creación del grupo:
+```bash
+sudo groupadd tomcat9
+```
+
+#### Creación del usuario:
+```bash
+sudo useradd -s /bin/false -g tomcat9 -d /etc/tomcat9 tomcat9
+```
+Este usuario será utilizado exclusivamente para gestionar el servicio de Tomcat.
+
+### 2.4 Arranque y comprobación del servicio
+
+#### Arranque del servicio:
+```bash
+sudo systemctl start tomcat9
+```
+
+#### Comprobación del estado del servicio:
+```bash
+sudo systemctl status tomcat9
+```
+Deberías ver que el servicio está activo y corriendo.
+
+### 2.5 Configuración de administración
+
+Editamos el archivo `/etc/tomcat9/tomcat-users.xml` para configurar los usuarios y roles necesarios:
+```xml
+<tomcat-users xmlns="http://tomcat.apache.org/xml"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://tomcat.apache.org/xml tomcat-users.xsd"
+              version="1.0">
+    <role rolename="admin"/>
+    <role rolename="admin-gui"/>
+    <role rolename="manager"/>
+    <role rolename="manager-gui"/>
+    <user username="alumno" password="1234" roles="admin,admin-gui,manager,manager-gui"/>
+</tomcat-users>
+```
+
+### 2.6 Instalación del administrador web
+
+Instalamos las herramientas adicionales:
+```bash
+sudo apt install -y tomcat9-admin
+```
+Esto proporciona acceso a las interfaces de administración y gestión del servidor.
+
+#### Acceso a los paneles de administración:
+- **Admin GUI:** [http://localhost:8080/manager/html](http://localhost:8080/manager/html)
+- **Host Manager GUI:** [http://localhost:8080/host-manager/html](http://localhost:8080/host-manager/html)
+
+En caso de requerir acceso remoto, sustituimos el archivo `/usr/share/tomcat9-admin/host-manager/META-INF/context.xml` por el siguiente contenido:
+```xml
+<Context antiResourceLocking="false" privileged="true">
+    <Valve className="org.apache.catalina.valves.RemoteAddrValve" allow="\d+\.\d+\.\d+\.\d+"/>
+</Context>
+```
+
+Reiniciamos el servidor:
+```bash
+sudo systemctl restart tomcat9
+```
 
 ---
 
-## **Paso 1: Instalación de OpenJDK**
+## 3. Despliegue manual mediante GUI
 
-1. Instalar OpenJDK 11 utilizando el gestor de paquetes:
-   ```bash
-   sudo apt install -y openjdk-11-jdk
-   ```
-
-2. Verificar que la instalación fue exitosa ejecutando:
-   ```bash
-   java -version
-   ```
-   Deberías ver un resultado similar a:
-   ```
-   openjdk version "11.x.x"
-   ```
+1. Accedemos a la GUI de Tomcat con el usuario configurado previamente.
+2. Buscamos la sección para desplegar archivos WAR.
+3. Seleccionamos el archivo `tomcat1.war`.
+4. Pulsamos **Desplegar** y verificamos que la aplicación esté disponible en el directorio `/tomcat1`.
 
 ---
 
-## **Paso 2: Instalación de Tomcat 9**
+## 4. Configuración y Despliegue con Maven
 
-### **2.1 Instalación del paquete Tomcat 9**
+### 4.1 Instalación de Maven
 
-1. Instalar Tomcat 9 utilizando el gestor de paquetes:
-   ```bash
-   sudo apt install -y tomcat9
-   ```
+Instalamos Maven:
+```bash
+sudo apt-get update && sudo apt-get -y install maven
+```
+Verificamos la instalación:
+```bash
+mvn -v
+```
 
-### **2.2 Creación de un grupo y usuario para Tomcat**
+### 4.2 Configuración de roles y usuarios
 
-1. Crear un grupo de usuarios específico para Tomcat:
-   ```bash
-   sudo groupadd tomcat9
-   ```
+Editamos el archivo `/etc/tomcat9/tomcat-users.xml` para incluir un usuario específico para despliegues con Maven:
+```xml
+<user username="deploy" password="1234" roles="manager-script"/>
+```
 
-2. Crear un usuario dedicado para el servicio:
-   ```bash
-   sudo useradd -s /bin/false -g tomcat9 -d /etc/tomcat9 tomcat9
-   ```
-   - `-s /bin/false`: Bloquea el acceso a la shell.
-   - `-g tomcat9`: Asigna al grupo `tomcat9`.
-   - `-d /etc/tomcat9`: Asigna el directorio de inicio del usuario.
+### 4.3 Configuración de Maven
+
+Editamos el archivo `/etc/maven/settings.xml` para agregar las credenciales del servidor:
+```xml
+<servers>
+    <server>
+        <id>Tomcat</id>
+        <username>deploy</username>
+        <password>1234</password>
+    </server>
+</servers>
+```
+
+### 4.4 Despliegue con Maven
+
+Generamos una aplicación de ejemplo:
+```bash
+mvn archetype:generate -DgroupId=org.example -DartifactId=tomcat-war -DarchetypeArtifactId=maven-archetype-webapp -DinteractiveMode=false
+cd tomcat-war
+```
+
+Editamos el archivo `pom.xml` para incluir el plugin de despliegue:
+```xml
+<build>
+    <finalName>tomcat-war</finalName>
+    <plugins>
+        <plugin>
+            <groupId>org.apache.tomcat.maven</groupId>
+            <artifactId>tomcat7-maven-plugin</artifactId>
+            <version>2.2</version>
+            <configuration>
+                <url>http://localhost:8080/manager/text</url>
+                <server>Tomcat</server>
+                <path>/despliegue</path>
+            </configuration>
+        </plugin>
+    </plugins>
+</build>
+```
+
+Comandos para desplegar la aplicación:
+```bash
+mvn tomcat7:deploy
+mvn tomcat7:redeploy
+mvn tomcat7:undeploy
+```
 
 ---
 
-## **Paso 3: Configuración y verificación del servicio**
+## 5. Tareas
 
-1. Iniciar el servicio Tomcat 9:
-   ```bash
-   sudo systemctl start tomcat9
-   ```
-
-2. Verificar que el servicio esté activo:
-   ```bash
-   sudo systemctl status tomcat9
-   ```
-   Deberías ver algo como:
-   ```
-   Active: active (running) ...
-   ```
-
-3. Acceder a la página de bienvenida de Tomcat:
-   - Abre tu navegador y visita: `http://localhost:8080`
-   - Deberías ver la página de inicio de Apache Tomcat.
-
----
-
-## **Notas finales**
-
-- Si encuentras algún problema durante la instalación o el servicio no inicia correctamente, revisa los logs en `/var/log/tomcat9/` para obtener más información.
-- Para detener o reiniciar el servicio, puedes utilizar:
-  ```bash
-  sudo systemctl stop tomcat9
-  sudo systemctl restart tomcat9
-  ```
-
+1. Realizar el despliegue de la aplicación de prueba generada.
+2. Repetir el despliegue con otra aplicación. Por ejemplo:
+```bash
+git clone https://github.com/cameronmcnz/rock-paper-scissors.git
+cd rock-paper-scissors
+mvn tomcat7:deploy
