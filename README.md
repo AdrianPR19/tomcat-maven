@@ -22,7 +22,7 @@ sudo apt install -y tomcat9
 ```bash
 sudo groupadd tomcat9
 ```
-
+![Captura del funcionamiento](/1.png)
 #### Creación del usuario:
 ```bash
 sudo useradd -s /bin/false -g tomcat9 -d /etc/tomcat9 tomcat9
