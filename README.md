@@ -42,6 +42,14 @@ sudo systemctl status tomcat9
 ```
 Deberías ver que el servicio está activo y corriendo.
 
+#### Importante:
+
+```bash
+config.vm.network "forwarded_port", guest: 8080, host: 8080
+```
+En el vagrantfile para que pueda funcionar
+
+
 ### 2.5 Configuración de administración
 
 Editamos el archivo `/etc/tomcat9/tomcat-users.xml` para configurar los usuarios y roles necesarios:
